@@ -8,12 +8,11 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async registerByToken(tokenCode: string, username: string) {
-    // 1. Validate InviteToken
     const inviteToken = await this.prisma.inviteToken.findUnique({
-      where: { code: tokenCode },
+      where: { id: tokenCode },
     });
 
     if (!inviteToken) {
@@ -35,18 +34,18 @@ export class AuthService {
     let attempts = 0;
 
     while (!isUnique && attempts < 5) {
-       const randomSuffix = Math.floor(1000 + Math.random() * 9000); // 4 digit random number
-       uniqueLoginId = `${username}#${randomSuffix}`;
-       const existingUser = await this.prisma.user.findUnique({ where: { loginId: uniqueLoginId } });
-       if (!existingUser) {
-         isUnique = true;
-       } else {
-         attempts++;
-       }
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000); // 4 digit random number
+      uniqueLoginId = `${username}#${randomSuffix}`;
+      const existingUser = await this.prisma.user.findUnique({ where: { loginId: uniqueLoginId } });
+      if (!existingUser) {
+        isUnique = true;
+      } else {
+        attempts++;
+      }
     }
 
     if (!isUnique) {
-        throw new BadRequestException('Could not generate unique login ID, please try again');
+      throw new BadRequestException('Could not generate unique login ID, please try again');
     }
 
     const deviceId = uuidv4();
@@ -83,6 +82,6 @@ export class AuthService {
   }
 
   async validateUser(userId: string) {
-      return this.prisma.user.findUnique({ where: { id: userId } });
+    return this.prisma.user.findUnique({ where: { id: userId } });
   }
 }

@@ -5,7 +5,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('register-by-token')
   async registerByToken(
@@ -15,17 +15,19 @@ export class AuthController {
   ) {
     const result = await this.authService.registerByToken(token, username);
 
-    res.cookie('access_token', result.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
+    const FOREVER_MS = 1000 * 60 * 60 * 24 * 365 * 20;
 
-    res.cookie('device_id', result.deviceId, {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
+      sameSite: 'lax' as const,
+      path: '/',
+      maxAge: FOREVER_MS,
+      expires: new Date(Date.now() + FOREVER_MS)
+    };
+
+    res.cookie('access_token', result.accessToken, cookieOptions);
+    res.cookie('device_id', result.deviceId, cookieOptions);
 
     return result.user;
   }
@@ -33,7 +35,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(@Req() req) {
-      return this.authService.validateUser(req.user.userId);
+    return this.authService.validateUser(req.user.userId);
   }
 
   @Post('logout')
