@@ -15,7 +15,14 @@ export class AiService {
         this.deepseekApiKey = this.configService.getOrThrow<string>('DEEPSEEK_API_KEY');
     }
 
-    private async checkAndIncrementLimit(userId: string, count: number = 1) {
+    private async checkAndIncrementLimit(userId: string | null, count: number = 1) {
+        if (!userId) {
+            // For guests, we don't have a record in DB.
+            // We allow the request to proceed, assuming the frontend handles the 1-time limit.
+            // Or we could implement IP-based tracking here if needed.
+            return;
+        }
+
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new BadRequestException('User not found');
 
@@ -51,7 +58,7 @@ export class AiService {
         });
     }
 
-    async generateQuestionVariants(userId: string, questionText: string) {
+    async generateQuestionVariants(userId: string | null, questionText: string) {
         await this.checkAndIncrementLimit(userId);
 
         const prompt = `
@@ -105,7 +112,7 @@ export class AiService {
         }
     }
 
-    async findCorrectAnswersBatch(userId: string, questions: { text: string, variants: string[] }[]) {
+    async findCorrectAnswersBatch(userId: string | null, questions: { text: string, variants: string[] }[]) {
         if (questions.length === 0) return [];
         await this.checkAndIncrementLimit(userId, 1); // Batch counts as 1 AI operation for simplicity or use questions.length
 
