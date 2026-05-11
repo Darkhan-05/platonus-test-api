@@ -82,6 +82,12 @@ export class AuthService {
   }
 
   async validateUser(userId: string) {
-    return this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return null;
+
+    return {
+      ...user,
+      favorites: JSON.parse(user.favorites || '[]'),
+    };
   }
 }

@@ -28,9 +28,14 @@ export class UserService {
       favorites.push(questionId);
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: { favorites: JSON.stringify(favorites) },
     });
+
+    return {
+      ...updatedUser,
+      favorites: JSON.parse(updatedUser.favorites || '[]'),
+    };
   }
 }

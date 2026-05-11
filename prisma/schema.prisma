@@ -9,14 +9,16 @@ datasource db {
 }
 
 model User {
-  id            String      @id @default(uuid())
-  username      String
-  loginId       String      @unique
-  deviceId      String
-  createdAt     DateTime    @default(now())
-  favorites     String // Stores JSON array of Question IDs
-  inviteTokenId String      @unique
-  inviteToken   InviteToken @relation(fields: [inviteTokenId], references: [id])
+  id                String      @id @default(uuid())
+  username          String
+  loginId           String      @unique
+  deviceId          String
+  createdAt         DateTime    @default(now())
+  favorites         String
+  dailyRequestCount Int         @default(0)
+  lastRequestAt     DateTime    @default(now())
+  inviteTokenId     String      @unique
+  inviteToken       InviteToken @relation(fields: [inviteTokenId], references: [id])
 }
 
 model InviteToken {
@@ -24,6 +26,35 @@ model InviteToken {
   code      String   @unique
   isUsed    Boolean  @default(false)
   expiresAt DateTime
-  createdBy String // Admin ID
+  createdBy String
   user      User?
+}
+
+model Answer {
+  id          String   @id
+  studentName String
+  hatColor    String
+  content     String
+  createdAt   DateTime @default(now())
+  sessionId   String
+  questionId  String
+  Question    Question @relation(fields: [questionId], references: [id])
+  Session     Session  @relation(fields: [sessionId], references: [id])
+}
+
+model Question {
+  id        String   @id
+  content   String
+  sessionId String
+  Answer    Answer[]
+  Session   Session  @relation(fields: [sessionId], references: [id])
+}
+
+model Session {
+  id        String     @id
+  topic     String
+  roomCode  String     @unique
+  createdAt DateTime   @default(now())
+  Answer    Answer[]
+  Question  Question[]
 }

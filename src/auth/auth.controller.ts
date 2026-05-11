@@ -20,7 +20,7 @@ export class AuthController {
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'none' as const,
+      sameSite: process.env.NODE_ENV === 'production' ? ('none' as const) : ('lax' as const),
       path: '/',
       maxAge: FOREVER_MS,
       expires: new Date(Date.now() + FOREVER_MS)
@@ -29,7 +29,10 @@ export class AuthController {
     res.cookie('access_token', result.accessToken, cookieOptions);
     res.cookie('device_id', result.deviceId, cookieOptions);
 
-    return result.user;
+    return {
+      ...result.user,
+      favorites: JSON.parse(result.user.favorites || '[]'),
+    };
   }
 
   @UseGuards(JwtAuthGuard)
